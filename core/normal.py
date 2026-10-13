@@ -12,28 +12,26 @@ class NormalHandle:
         self.cfg = config
 
     async def get_group_list(self, event: AiocqhttpMessageEvent):
-        client = event.bot
-        group_list = await client.get_group_list()
-
-        info = "\n\n".join(
-            f"{i + 1}. {g['group_id']}: {g['group_name']}"
-            for i, g in enumerate(group_list)
-        )
-        text = f"【群列表】共加入 {len(group_list)} 个群：\n\n{info}"
-        logger.debug(text)
-        yield event.plain_result(text)
+        items = await event.bot.get_group_list()
+        if not items:
+            yield event.plain_result("当前没有群。")
+            return
+        lines = [f"群列表 · 共 {len(items)} 项"]
+        lines.extend(f"{i}. {item['group_name']}（{item['group_id']}）"
+                     for i, item in enumerate(items, 1))
+        lines.append("操作：/退群 <群号或序号>")
+        yield event.plain_result("\n".join(lines)).use_t2i(True)
 
     async def get_friend_list(self, event: AiocqhttpMessageEvent):
-        client = event.bot
-        friend_list = await client.get_friend_list()
-
-        info = "\n\n".join(
-            f"{i + 1}. {f['user_id']}: {f['nickname']}"
-            for i, f in enumerate(friend_list)
-        )
-        text = f"【好友列表】共 {len(friend_list)} 位好友：\n{info}"
-        logger.debug(text)
-        yield event.plain_result(text)
+        items = await event.bot.get_friend_list()
+        if not items:
+            yield event.plain_result("当前没有好友。")
+            return
+        lines = [f"好友列表 · 共 {len(items)} 项"]
+        lines.extend(f"{i}. {item['nickname']}（{item['user_id']}）"
+                     for i, item in enumerate(items, 1))
+        lines.append("操作：/删好友 <QQ号或序号>")
+        yield event.plain_result("\n".join(lines)).use_t2i(True)
 
     async def set_group_leave(self, event: AiocqhttpMessageEvent):
         """退群 <序号|群号|区间> [可批量]"""
@@ -48,7 +46,7 @@ class NormalHandle:
         indexes, ids = parse_multi_input(raw, total=len(group_list))
 
         if not indexes and not ids:
-            yield event.plain_result("请输入群序号或群号，可空格分隔")
+            yield event.plain_result("未指定退群目标。\n用法：/退群 <群号或序号> [更多目标]\n发送 /群列表 查看序号，多个目标用空格分隔。")
             return
 
         group_map = {str(g["group_id"]): g for g in group_list}
@@ -95,7 +93,7 @@ class NormalHandle:
         user_ids |= ids
 
         if not user_ids:
-            yield event.plain_result("请 @好友、输入 QQ 号或好友序号")
+            yield event.plain_result("未指定好友。\n用法：/删好友 <QQ号或序号> [更多目标]\n发送 /好友列表 查看序号。")
             return
 
         friend_map = {str(f["user_id"]): f for f in friend_list}
@@ -116,30 +114,30 @@ class NormalHandle:
         """添加审批员"""
         at_ids = get_ats(event)
         if not at_ids:
-            yield event.plain_result("需@要添加的审批员")
+            yield event.plain_result("未指定审批员。\n用法：/加审批员 @QQ号\n示例：/加审批员 @123456789\n私聊直接输入文字形式的 @QQ号 即可。")
             return
         for at_id in at_ids:
             nickname = await get_nickname(
                 client=event.bot, group_id=event.get_group_id(), user_id=at_id
             )
             if self.cfg.is_manage_user(at_id):
-                yield event.plain_result(f"{nickname}已在审批员列表中")
+                yield event.plain_result(f"「{nickname}」已在审批员列表中，无需重复添加。")
                 continue
             self.cfg.add_manage_user(at_id)
-            yield event.plain_result(f"已添加审批员: {nickname}")
+            yield event.plain_result(f"已添加审批员「{nickname}」。")
 
     async def remove_manage_user(self, event: AiocqhttpMessageEvent):
         """移除审批员"""
         at_ids = get_ats(event)
         if not at_ids:
-            yield event.plain_result("需@要移除的审批员")
+            yield event.plain_result("未指定审批员。\n用法：/减审批员 @QQ号\n示例：/减审批员 @123456789\n私聊直接输入文字形式的 @QQ号 即可。")
             return
         for at_id in at_ids:
             nickname = await get_nickname(
                 client=event.bot, group_id=event.get_group_id(), user_id=at_id
             )
             if not self.cfg.is_manage_user(at_id):
-                yield event.plain_result(f"{nickname}不在审批员列表中")
+                yield event.plain_result(f"「{nickname}」不在审批员列表中，无需移除。")
                 continue
             self.cfg.remove_manage_user(at_id)
-            yield event.plain_result(f"已移除审批员: {nickname}")
+            yield event.plain_result(f"已移除审批员「{nickname}」。")
