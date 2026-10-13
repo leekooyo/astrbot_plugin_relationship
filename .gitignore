@@ -4,3 +4,14 @@ core/expansion/handle.py
 core/expansion/protobuf.py
 core/expansion/__init__.py
 core/expansion.py
+# Local runtime files
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.py[cod]
+.env
+.env.*
+*.log
+*.db
+*.sqlite*
+data/

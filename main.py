@@ -54,16 +54,16 @@ class RelationshipPlugin(Star):
             yield msg
 
     @filter.permission_type(PermissionType.ADMIN)
-    @filter.command("加审批员")
+    @filter.command("加审批员", alias={"加审核员"})
     async def append_manage_user(self, event: AiocqhttpMessageEvent):
-        """加审批员@某人"""
+        """加审批员 @QQ（别名：加审核员）"""
         async for msg in self.normal.append_manage_user(event):
             yield msg
 
     @filter.permission_type(PermissionType.ADMIN)
-    @filter.command("减审批员")
+    @filter.command("减审批员", alias={"减审核员"})
     async def remove_manage_user(self, event: AiocqhttpMessageEvent):
-        """减审批员@某人"""
+        """减审批员 @QQ（别名：减审核员）"""
         async for msg in self.normal.remove_manage_user(event):
             yield msg
 
@@ -119,6 +119,7 @@ class RelationshipPlugin(Star):
         ):
             yield msg
 
+    @filter.permission_type(PermissionType.ADMIN)
     @filter.command("推荐")
     async def on_contact(self, event: AiocqhttpMessageEvent):
         """推荐 <群号/@群友/@qq>"""
