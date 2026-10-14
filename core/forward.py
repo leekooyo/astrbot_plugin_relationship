@@ -1,4 +1,5 @@
 import random
+import time
 from typing import Any
 
 from aiocqhttp import CQHttp
@@ -13,6 +14,7 @@ from .utils import get_ats, get_reply_text, parse_multi_input
 
 
 class ForwardTool:
+    _recent_notices: dict[str, float] = {}
     @staticmethod
     def _make_nodes(messages: list[dict]) -> list[dict[str, Any]]:
         """消息 -> 转发节点"""
@@ -201,14 +203,27 @@ class ForwardTool:
         event: AiocqhttpMessageEvent,
         config: PluginConfig,
         text: str,
+        dedup_key: str = "",
+        admin_only: bool = False,
     ):
+        if dedup_key:
+            now = time.monotonic()
+            if now - ForwardTool._recent_notices.get(dedup_key, -1000) < 30:
+                return
+            ForwardTool._recent_notices[dedup_key] = now
+            if len(ForwardTool._recent_notices) > 500:
+                ForwardTool._recent_notices = {
+                    key: stamp for key, stamp in ForwardTool._recent_notices.items()
+                    if now - stamp < 30
+                }
         try:
-            if config.manage_group:
+            target = config.raw_data().get("notify_target", "admin_private")
+            if target == "review_group" and config.manage_group:
                 await event.bot.send_group_msg(
                     group_id=int(config.manage_group), message=text
                 )
-            elif config.manage_users:
-                for user_id in config.manage_users:
+            elif (config.admins_id if admin_only else config.manage_users):
+                for user_id in (config.admins_id if admin_only else config.manage_users):
                     try:
                         await event.bot.send_private_msg(
                             user_id=int(user_id), message=text
@@ -219,5 +234,7 @@ class ForwardTool:
                 await event.bot.send_private_msg(
                     user_id=int(config.admin_id), message=text
                 )
+            else:
+                logger.warning("未配置机器人管理员或审批员，无法发送通知")
         except Exception as e:
             logger.warning(f"消息发送失败: {e}")

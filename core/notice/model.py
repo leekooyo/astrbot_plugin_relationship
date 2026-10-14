@@ -30,6 +30,8 @@ class NoticeMessage:
     def is_self_notice(self) -> bool:
         return (
             self.post_type == "notice"
+            and bool(self.user_id and self.self_id and self.group_id)
             and self.user_id == self.self_id
-            and self.operator_id != self.self_id
+            and (self.notice_type in ("group_increase", "group_decrease")
+                 or self.operator_id != self.self_id)
         )

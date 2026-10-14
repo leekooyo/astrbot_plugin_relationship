@@ -97,6 +97,7 @@ class RequestDecision:
         # ---------- 群邀请 ----------
         if isinstance(self.req, GroupRequest):
             gid = str(self.req.group_id)
+            inviter_id = str(self.req.inviter_id)
 
             # 1. 全局自动拒绝
             if cfg.auto_reject_group:
@@ -111,6 +112,12 @@ class RequestDecision:
                 result.user_reply = "该群已被列入黑名单，自动拒绝"
                 result.block_group = True
                 result.admin_reply += "\n自动处理：该群在黑名单中"
+                return True
+
+            if inviter_id in cfg.user_blacklist:
+                result.approve = False
+                result.user_reply = "邀请人已在黑名单中，自动拒绝群邀请"
+                result.admin_reply += "\n自动处理：邀请人在用户黑名单中"
                 return True
 
             # 3. 自动同意

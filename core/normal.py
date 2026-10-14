@@ -4,6 +4,7 @@ from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import (
 )
 
 from .config import PluginConfig
+from .forward import ForwardTool
 from .utils import get_ats, get_nickname, parse_multi_input
 
 
@@ -52,20 +53,22 @@ class NormalHandle:
         group_map = {str(g["group_id"]): g for g in group_list}
         msgs = []
 
-        # 序号
-        for idx in sorted(indexes):
-            g = group_list[idx]
-            await client.set_group_leave(group_id=int(g["group_id"]))
-            msgs.append(f"已退出群聊：{g['group_name']}({g['group_id']})")
-
-        # 群号
-        for gid in ids:
+        target_ids = {str(group_list[idx]["group_id"]) for idx in indexes} | set(ids)
+        for gid in sorted(target_ids):
             g = group_map.get(gid)
             if not g:
                 msgs.append(f"不存在群聊：{gid}")
                 continue
-            await client.set_group_leave(group_id=int(gid))
-            msgs.append(f"已退出群聊：{g['group_name']}({gid})")
+            try:
+                await client.set_group_leave(group_id=int(gid))
+                msgs.append(f"退群请求已确认：{g['group_name']}({gid})")
+                await ForwardTool.send_admin(event, self.cfg,
+                    f"【机器人主动退群】群：{g['group_name']}({gid})\nQQ 接口已确认退群请求",
+                    dedup_key=f"bot-left:{gid}", admin_only=True)
+            except Exception as exc:
+                msgs.append(f"退群失败：{g['group_name']}({gid})：{exc}")
+                await ForwardTool.send_admin(event, self.cfg,
+                    f"【机器人退群失败】群：{g['group_name']}({gid})\n原因：{exc}", admin_only=True)
 
         yield event.plain_result("\n".join(msgs))
 

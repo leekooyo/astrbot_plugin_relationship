@@ -24,23 +24,27 @@ _✨ 人际关系管理器 ✨_
 - 好友列表与群列表查询（完整列表；长内容转为单张图片）。
 - 批量退群、批量删好友（支持序号、ID、区间、@）。
 - 好友申请与群邀请：自动审核规则（黑名单/自动同意/自动拒绝）与手动审核（引用申请消息后用 `同意/拒绝`）。
-- 群事件通知处理：管理员变动、禁言、被踢、被邀请入群。
+- 群事件通知处理：机器人实际入群、主动退群、被踢。机器人禁言/解禁由 gatekeeper 通知；普通成员事件不会推送。
 - 风险控制：小群/超大群自动退群、超过最大群容量自动退群、被踢出后自动拉黑群/用户、互斥成员（`mutual_blacklist`）检测。
 - 聊天记录抽查与新群自动抽查（可延迟）。
 
 ## 安装
 
-- 在 AstrBot 插件市场搜索 `astrbot_plugin_relationship` 一键安装。
+- 在 AstrBot 中选择「通过仓库地址安装」，填写 `https://github.com/leekooyo/astrbot_plugin_relationship`。
 - 或手动克隆到插件目录：
 
 ```bash
 cd /AstrBot/data/plugins
-git clone https://github.com/Zhalslar/astrbot_plugin_relationship
+git clone https://github.com/leekooyo/astrbot_plugin_relationship
 ```
+
+本仓库基于 [Zhalslar 原项目](https://github.com/Zhalslar/astrbot_plugin_relationship) 独立维护，原始基线与维护差异见 [UPSTREAM.md](UPSTREAM.md)。审批员、黑名单、群号及聊天记录属于本机运行数据，不要提交到仓库。
 
 ## 配置
 
 在 AstrBot 面板中配置：`插件管理 -> astrbot_plugin_relationship -> 操作 -> 插件配置`。
+
+`notify_target` 默认 `admin_private`：群事件逐人私聊机器人管理员，申请消息发送给已配置的审批员（包括管理员）；选 `review_group` 时发送到 `manage_group`，未填审核群则回退私聊。群邀请申请、接口处理结果与实际入群分别通知，不能把审批成功当作已入群。`notify_bot_ban` 默认关闭，避免与 gatekeeper 的禁言通知重复。
 
 ## 指令
 
@@ -81,11 +85,11 @@ git clone https://github.com/Zhalslar/astrbot_plugin_relationship
 
 ## 机制说明
 
-**申请/邀请事件**：先走自动规则（黑名单/自动同意/自动拒绝），若未自动处理，将通知审核群或管理员，等待手动 `同意/拒绝`。
+**申请/邀请事件**：先走自动规则（黑名单/自动同意/自动拒绝）。自动处理由 QQ 接口确认后通知结果；待人工审批的申请通知管理员或审核群，引用申请通知后用 `同意/拒绝`。接口处理失败会明确报错，不发送成功文案。
 
-**群事件通知**：管理员变动、禁言、被踢、被邀请入群会通知审核群/管理员，可根据配置自动退群、拉黑群/用户。
+**群事件通知**：仅在机器人实际入群、主动退群或被踢时发送通知；普通成员入群、退群或被踢不会推送。机器人被踢后拉黑的是事件中的操作者；操作者无法确认时不拉黑用户。机器人禁言与解禁由 gatekeeper 负责轮询和通知。AstrBot 必须允许机器人自身 notice 进入插件，同时仍可忽略机器人自己发送的普通消息。
 
-**新群自动抽查**：被邀请入群且通过规则校验后，会自动转发该群的近期消息到审核群或管理员。
+**新群自动抽查**：机器人实际入群且通过自动退群规则后，按配置延迟转发该群近期消息到审核群或管理员。
 
 ## 示例图
 
@@ -101,5 +105,5 @@ git clone https://github.com/Zhalslar/astrbot_plugin_relationship
 ## 注意事项
 
 - 如果未配置 `manage_group` 且无管理员 ID，将无法发送审核与通知消息。
-- 想第一时间得到反馈的可以来作者的插件反馈群（QQ群）：460973561（不点star不给进）
-- 若想使用 `加好友、加群` 功能，请进群联系 Zhalsalr 请求分享data\plugins\astrbot_plugin_relationship\core\expansion.py中缺失的源码，源码仅对开发圈的小团体用户开放，闲人勿扰。
+- 此维护版的问题请在本仓库提交 Issue。
+- 仓库不包含原项目的私有 `core/expansion.py`。因此 `加好友`、`加群` 及对应 LLM 工具会返回“拓展模块未加载”，其余公开功能不依赖该文件。

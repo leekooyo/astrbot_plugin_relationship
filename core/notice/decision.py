@@ -41,28 +41,32 @@ class NoticeDecision:
                 await self._handle_admin_change(result)
             case ("group_ban", _):
                 await self._handle_ban(result)
-            case ("group_decrease", "kick_me"):
+            case ("group_decrease", "kick_me" | "kick"):
                 await self._handle_kicked(result)
-            case ("group_increase", "invite"):
+            case ("group_increase", _):
                 await self._handle_invited(result)
 
         return result
 
     async def _get_group_name(self) -> str:
         if self._group_name is None:
-            info = (
-                await self.client.get_group_info(group_id=int(self.msg.group_id)) or {}
-            )
-            self._group_name = info.get("group_name", "")
+            try:
+                info = await self.client.get_group_info(group_id=int(self.msg.group_id)) or {}
+                self._group_name = info.get("group_name") or self.msg.group_id
+            except Exception:
+                self._group_name = self.msg.group_id
         return self._group_name
 
     async def _get_operator_name(self) -> str:
         if self._operator_name is None:
-            self._operator_name = await get_nickname(
-                self.client,
-                user_id=int(self.msg.operator_id),
-                group_id=self.msg.group_id,
-            )
+            try:
+                self._operator_name = await get_nickname(
+                    self.client,
+                    user_id=int(self.msg.operator_id),
+                    group_id=self.msg.group_id,
+                )
+            except Exception:
+                self._operator_name = self.msg.operator_id or "未知"
         return self._operator_name
 
     async def _handle_admin_change(self, result: NoticeResult):
@@ -101,21 +105,21 @@ class NoticeDecision:
         group_name = await self._get_group_name()
         operator_name = await self._get_operator_name()
         gid = self.msg.group_id
-        result.admin_reply = f"呜呜ww..我被 {operator_name} 踢出了 {group_name}({gid})"
+        result.admin_reply = f"【机器人被踢出群】群：{group_name}({gid})\n操作者：{operator_name}({self.msg.operator_id})"
         if self.cfg.notice.kick_block_group:
             result.black_group = True
-            result.admin_reply += "，已将此群拉进黑名单"
+            result.admin_reply += "\n该群将加入黑名单"
 
         if self.cfg.notice.kick_block_user:
             result.black_user = True
-            result.admin_reply += "，已将此人拉进黑名单"
+            result.admin_reply += "\n踢人者将加入黑名单"
 
     async def _handle_invited(self, result: NoticeResult):
         group_name = await self._get_group_name()
         operator_name = await self._get_operator_name()
         gid = int(self.msg.group_id)
 
-        result.admin_reply = f"主人..我被 {operator_name} 拉进了 {group_name}({gid})。"
+        result.admin_reply = f"【机器人实际入群】群：{group_name}({gid})\n邀请人或操作者：{operator_name}({self.msg.operator_id})"
 
         # 审批员拉群直接放行，其余人按规则过滤
         if self.msg.operator_id not in self.cfg.manage_users:
@@ -138,7 +142,7 @@ class NoticeDecision:
         self, result: NoticeResult, group_name: str, gid: int
     ) -> bool:
         if self.cfg.is_black_group(self.msg.group_id):
-            result.admin_reply += f"\n群聊 {group_name}({gid}) 在黑名单里，我退群了"
+            result.admin_reply += f"\n群聊 {group_name}({gid}) 在黑名单里，准备退群"
             result.operator_reply = "把我踢了还想要我回来？退了退了"
             result.leave_group = True
             return True
@@ -150,7 +154,7 @@ class NoticeDecision:
 
         if len(group_list) > max_cap:
             result.admin_reply += (
-                f"\n我已经加了{len(group_list)}个群（超过了{max_cap}个），这群我退了"
+                f"\n我已经加了{len(group_list)}个群（超过了{max_cap}个），准备退群"
             )
             result.operator_reply = f"我最多只能加{max_cap}个群，现在已经加了{len(group_list)}个群，请不要拉我进群了"
             result.leave_group = True
@@ -176,7 +180,7 @@ class NoticeDecision:
         )
 
         result.admin_reply += (
-            f"\n检测到群内存在互斥成员 {member_name}({member_id})，这群我退了"
+            f"\n检测到群内存在互斥成员 {member_name}({member_id})，准备退群"
         )
         result.operator_reply = f"我不想和{member_name}({member_id})在同一个群里，退了"
         result.leave_group = True
@@ -189,12 +193,15 @@ class NoticeDecision:
         group_info = (
             await self.client.get_group_info(group_id=int(gid), no_cache=True) or {}
         )
-        member_count = group_info.get("member_count", 0)
+        member_count = group_info.get("member_count")
+        if member_count is None:
+            result.admin_reply += "\n暂未取得群人数，未执行人数限制"
+            return False
 
         # 1. 小群限制
         min_size = self.ncfg.min_group_size
         if self.ncfg.block_small_group and member_count <= min_size:
-            result.admin_reply += f"\n群人数 {member_count} ≤ {min_size}，小群我退了"
+            result.admin_reply += f"\n群人数 {member_count} ≤ {min_size}，准备退群"
             result.operator_reply = f"小群不加，人数 {member_count} ≤ {min_size}"
             result.leave_group = True
             return True
@@ -202,7 +209,7 @@ class NoticeDecision:
         # 2. 大群限制
         max_size = self.ncfg.max_group_size
         if max_size and member_count > max_size:
-            result.admin_reply += f"\n群人数 {member_count} > {max_size}，大群我退了"
+            result.admin_reply += f"\n群人数 {member_count} > {max_size}，准备退群"
             result.operator_reply = f"大群不加，人数 {member_count} > {max_size}"
             result.leave_group = True
             return True

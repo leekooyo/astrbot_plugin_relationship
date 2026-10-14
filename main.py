@@ -275,7 +275,10 @@ class RelationshipPlugin(Star):
         try:
             client = event.bot
             await client.set_group_leave(group_id=int(gid))
-            return f"成功退出群聊: {gid}"
+            await ForwardTool.send_admin(event, self.cfg,
+                f"【机器人主动退群】群号：{gid}\nQQ 接口已确认退群请求",
+                dedup_key=f"bot-left:{gid}", admin_only=True)
+            return f"退群请求已确认: {gid}"
         except Exception as e:
             return f"退群失败: {e}"
 

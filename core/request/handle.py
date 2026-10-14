@@ -62,7 +62,14 @@ class RequestHandle:
         result = await decision.decide(approve=approve, extra=extra, block=block)
 
         if result.approve is not None:
-            await self._do_approve(event.bot, req, result.approve)
+            error = await self._do_approve(event.bot, req, result.approve)
+            if error:
+                failure = f"审批失败：{error}"
+                if approve is None:
+                    await ForwardTool.send_admin(event, self.cfg, req.to_display_text() + "\n" + failure)
+                else:
+                    yield event.plain_result(failure)
+                return
 
         if result.event_reply:
             yield event.plain_result(result.event_reply)
@@ -83,7 +90,7 @@ class RequestHandle:
         elif result.block_user and isinstance(req, FriendRequest):
             self.cfg.add_block_user(req.user_id)
 
-    async def _do_approve(self, client: CQHttp, req: BaseRequest, approve: bool):
+    async def _do_approve(self, client: CQHttp, req: BaseRequest, approve: bool) -> str | None:
         try:
             if isinstance(req, FriendRequest):
                 await client.set_friend_add_request(flag=req.flag, approve=approve)
@@ -93,6 +100,8 @@ class RequestHandle:
                 )
         except Exception as e:
             logger.error(f"审批失败: {e}")
+            return str(e)
+        return None
 
     async def _send_user_reply(
         self,

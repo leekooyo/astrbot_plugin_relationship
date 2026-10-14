@@ -1,8 +1,21 @@
 {
     "manage_group": {
         "description": "审批群",
-        "hint": "bot收到的好友申请、群邀请在审批群里审批, 不填则将审批信息私发给bot管理员",
+        "hint": "仅在 notify_target=review_group 时作为申请和群事件的主要通知群；否则逐人私聊机器人管理员/审批员。",
         "type": "string"
+    },
+    "notify_target": {
+        "description": "申请和群事件通知渠道",
+        "hint": "admin_private：群事件逐人私聊机器人管理员，申请发给已配置审批员（包含管理员）；review_group：发送到审批群。审批群未配置时回退私聊。",
+        "type": "string",
+        "options": ["admin_private", "review_group"],
+        "default": "admin_private"
+    },
+    "notify_bot_ban": {
+        "description": "同时推送机器人禁言 notice",
+        "hint": "默认关闭，由 gatekeeper 轮询并通知禁言/解禁，避免重复且能覆盖自然到期。仅在未使用 gatekeeper 时考虑开启。",
+        "type": "bool",
+        "default": false
     },
     "manage_users": {
         "description": "审批员",
@@ -28,7 +41,7 @@
             "batch_size": {
                 "description": "单次转发消息数量",
                 "type": "int",
-                "hint": "由于一次性转发过多消息容易报错，所有插件采用了分批次转发的策略。此处定义每次转发的消息数量，消息超过此数量会自动分批次转发",
+                "hint": "自动抽查新群聊天记录时，每批转发的消息数量。",
                 "slider": {
                     "min": 10,
                     "max": 60,
@@ -38,7 +51,7 @@
             },
             "check_new_group": {
                 "description": "是否自动抽查群聊天记录",
-                "hint": "开启后，每次触发群管理事件时，bot会自动抽查对应群的聊天记录",
+                "hint": "机器人实际加入新群且通过自动退群规则后，延迟抽查该群聊天记录。",
                 "type": "bool",
                 "default": true
             },
@@ -67,7 +80,7 @@
             },
             "user_blacklist": {
                 "description": "用户黑名单",
-                "hint": "群聊黑名单中的用户拉bot进群或添加bot为好友时, 会被自动拒绝",
+                "hint": "这些用户邀请 bot 加群或添加 bot 好友时，自动拒绝申请。",
                 "type": "list"
             },
             "auto_reject_group": {
@@ -98,7 +111,7 @@
     },
     "notice": {
         "description": "通知配置",
-        "hint": "通知类事件：被设为管理员、被撤了管理员、被禁言、被拉进群、被踢出群",
+        "hint": "仅通知与机器人自身有关的群事件；普通成员进群、退群或被踢不会推送。机器人禁言通知默认由 gatekeeper 负责。",
         "type": "object",
         "items": {
             "block_small_group": {

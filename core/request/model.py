@@ -99,7 +99,10 @@ class FriendRequest(BaseRequest):
             return None
 
         user_id = raw.get("user_id", 0)
-        info = await client.get_stranger_info(user_id=int(user_id)) or {}
+        try:
+            info = await client.get_stranger_info(user_id=int(user_id)) or {}
+        except Exception:
+            info = {}
 
         return cls(
             nickname=info.get("nickname") or "未知昵称",
@@ -144,8 +147,14 @@ class GroupRequest(BaseRequest):
         inviter_id = raw.get("user_id", 0)
         group_id = raw.get("group_id", 0)
 
-        inviter_info = await client.get_stranger_info(user_id=int(inviter_id)) or {}
-        group_info = await client.get_group_info(group_id=group_id)
+        try:
+            inviter_info = await client.get_stranger_info(user_id=int(inviter_id)) or {}
+        except Exception:
+            inviter_info = {}
+        try:
+            group_info = await client.get_group_info(group_id=group_id) or {}
+        except Exception:
+            group_info = {}
 
         return cls(
             inviter_nickname=inviter_info.get("nickname") or "未知昵称",
