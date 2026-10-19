@@ -26,12 +26,12 @@ class RequestHandle:
         """处理好友申请或群邀请"""
         sender_id = event.get_sender_id()
         if not self.cfg.is_manage_user(sender_id):
-            yield event.plain_result("你没权限")
+            yield event.plain_result("只有已设置的申请审批员可以处理申请。请联系机器人管理员添加审批员。")
             return
         text = get_reply_text(event)
         req = BaseRequest.from_display_text(text)
         if not req:
-            yield event.plain_result("无法解析申请信息，请确保引用的是正确的申请消息")
+            yield event.plain_result("没有识别到申请。请先引用机器人发送的好友申请或群邀请通知，再发送本指令。")
             return
         async for msg in self._handle_req(
             event,
