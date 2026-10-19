@@ -117,7 +117,7 @@ class NormalHandle:
         """添加审批员"""
         at_ids = get_ats(event)
         if not at_ids:
-            yield event.plain_result("未指定审批员。\n用法：/加审批员 @QQ号\n示例：/加审批员 @123456789\n私聊直接输入文字形式的 @QQ号 即可。")
+            yield event.plain_result("未指定审批员。\n用法：/加审批员 @QQ号\n示例：/加审批员 @<QQ号>\n私聊直接输入文字形式的 @QQ号 即可。")
             return
         for at_id in at_ids:
             nickname = await get_nickname(
@@ -133,7 +133,7 @@ class NormalHandle:
         """移除审批员"""
         at_ids = get_ats(event)
         if not at_ids:
-            yield event.plain_result("未指定审批员。\n用法：/减审批员 @QQ号\n示例：/减审批员 @123456789\n私聊直接输入文字形式的 @QQ号 即可。")
+            yield event.plain_result("未指定审批员。\n用法：/减审批员 @QQ号\n示例：/减审批员 @<QQ号>\n私聊直接输入文字形式的 @QQ号 即可。")
             return
         for at_id in at_ids:
             nickname = await get_nickname(
