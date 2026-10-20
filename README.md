@@ -1,8 +1,6 @@
 <div align="center">
 
-
 # astrbot_plugin_relationship
-
 
 _✨ 人际关系管理器 ✨_
 
@@ -11,6 +9,8 @@ _✨ 人际关系管理器 ✨_
 </div>
 
 > 本仓库由 [leekooyo](https://github.com/leekooyo) 维护，基于 [Zhalslar 的原项目](https://github.com/Zhalslar/astrbot_plugin_relationship)；安装和更新请使用本仓库地址。原始基线见 [UPSTREAM.md](UPSTREAM.md)。
+
+**当前版本：v3.1.2。** 版本号以 [metadata.yaml](metadata.yaml) 为准。
 
 > **好友列表** 与 **群列表** 一次展示全部内容；长列表使用 AstrBot 默认图片模板输出一张长图。
 
