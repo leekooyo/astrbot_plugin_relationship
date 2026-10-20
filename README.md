@@ -1,17 +1,16 @@
 <div align="center">
 
-![:name](https://count.getloli.com/@astrbot_plugin_relationship?name=astrbot_plugin_relationship&theme=minecraft&padding=6&offset=0&align=top&scale=1&pixelated=1&darkmode=auto)
 
 # astrbot_plugin_relationship
+
 
 _✨ 人际关系管理器 ✨_
 
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
-[![AstrBot](https://img.shields.io/badge/AstrBot-3.4%2B-orange.svg)](https://github.com/Soulter/AstrBot)
-[![GitHub](https://img.shields.io/badge/作者-Zhalslar-blue)](https://github.com/Zhalslar)
 
 </div>
+
+> 本仓库由 [leekooyo](https://github.com/leekooyo) 维护，基于 [Zhalslar 的原项目](https://github.com/Zhalslar/astrbot_plugin_relationship)；安装和更新请使用本仓库地址。原始基线见 [UPSTREAM.md](UPSTREAM.md)。
 
 > **好友列表** 与 **群列表** 一次展示全部内容；长列表使用 AstrBot 默认图片模板输出一张长图。
 
@@ -61,19 +60,15 @@ git clone https://github.com/leekooyo/astrbot_plugin_relationship
 | `拒绝 [理由]`                                  | 拒绝好友/群邀请          | 仅审核员         |
 | `抽查 [群号/@群友/QQ] [数量]`                  | 抽查聊天记录             | 管理员           |
 | `推荐 [群号/@群友/@QQ]`                        | 发送该群/用户的推荐卡片  | 管理员           |
-| `加好友 [QQ号/@某人] [验证消息] [备注] [答案]` | 向目标用户发送好友申请   | 仅开发者         |
-| `加群 [群号] [答案] `                          | 向目标群聊发送进群申请   | 仅开发者         |
 
 ### LLM Tools（大模型工具调用）
 
-本插件现已全面支持 LLM 函数调用（Function Calling / Tools），大模型可根据语境自主调用以下能力：
+启用 LLM 工具调用后，大模型可根据语境调用以下公开功能；涉及退群、删好友等操作时请先确认权限和目标：
 - `llm_get_group_list`: 查看机器人加入的所有群聊列表。
 - `llm_get_friend_list`: 查看机器人的所有好友列表。
 - `llm_leave_group`: 退出指定的群聊。
 - `llm_delete_friend`: 删除指定的好友。
 - `llm_send_contact_card`: 主动发送好友或群聊的推荐名片。
-- `llm_add_friend_request`: 向指定 QQ 用户主动发起添加好友申请。
-- `llm_add_group_request`: 主动向指定 QQ 群发起加群申请。
 - `llm_check_messages`: 抽查指定群聊或用户的历史聊天记录并合并转发到当前会话。
 
 使用说明：
@@ -81,7 +76,10 @@ git clone https://github.com/leekooyo/astrbot_plugin_relationship
 - `同意/拒绝` 必须**引用申请消息**使用。
 - `退群/删好友` 支持空格分隔、区间（`1-5` / `1~5`）与批量输入。
 - `抽查` 若未指定目标，会随机抽查一个群。
-- `加好友、加群` 命令仅开发者可用，非开发者用户因缺少源码无法使用。
+
+### 未提供的扩展功能
+
+本仓库的 `core/expansion.py` 只是占位文件，没有实现扩展处理器。因此 `加好友`、`加群` 命令和对应的 `llm_add_friend_request`、`llm_add_group_request` 工具虽保留调用入口，在此公开版本中均不可用，会提示扩展模块未加载；开发者权限也不能使其生效。
 
 ## 机制说明
 
@@ -91,19 +89,10 @@ git clone https://github.com/leekooyo/astrbot_plugin_relationship
 
 **新群自动抽查**：机器人实际入群且通过自动退群规则后，按配置延迟转发该群近期消息到审核群或管理员。
 
-## 示例图
+## 反馈与维护
 
-![example](https://github.com/user-attachments/assets/656ee439-a215-4aae-8ddd-96fad9067e6a)
-
-## 👥 贡献指南
-
-- 🌟 Star 这个项目！（点右上角的星星，感谢支持！）
-- 🐛 提交 Issue 报告问题
-- 💡 提出新功能建议
-- 🔧 提交 Pull Request 改进代码
+此维护版的问题和改进请在本仓库提交 Issue 或 Pull Request。上游版本会在核对差异后手动合并。
 
 ## 注意事项
 
 - 如果未配置 `manage_group` 且无管理员 ID，将无法发送审核与通知消息。
-- 此维护版的问题请在本仓库提交 Issue。
-- 仓库不包含原项目的私有 `core/expansion.py`。因此 `加好友`、`加群` 及对应 LLM 工具会返回“拓展模块未加载”，其余公开功能不依赖该文件。
