@@ -3,6 +3,7 @@ import random
 from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import (
     AiocqhttpMessageEvent,
 )
+from astrbot.core.utils.message_send_policy import should_suppress_event_send
 
 from .config import PluginConfig
 from .utils import get_ats
@@ -15,6 +16,10 @@ class ContactHandle:
     @staticmethod
     async def cqhttp_send(event: AiocqhttpMessageEvent, payload: dict):
         """用 aiocqhttp 发送消息"""
+        # 复读发送隔离：当前消息派生的发送被取消时，不调用 API、不停止事件
+        if should_suppress_event_send(event):
+            return None
+
         if event.is_private_chat():
             payload["user_id"] = int(event.get_sender_id())
             action = "send_private_msg"

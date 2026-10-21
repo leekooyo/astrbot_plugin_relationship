@@ -6,6 +6,10 @@ from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import (
 )
 from astrbot.core.star.filter.permission import PermissionType
 from astrbot.core.star.filter.platform_adapter_type import PlatformAdapterType
+from astrbot.core.utils.message_send_policy import (
+    SUPPRESSED_TOOL_RESULT,
+    should_suppress_event_send,
+)
 
 from .core.config import PluginConfig
 from .core.contact import ContactHandle
@@ -322,6 +326,9 @@ class RelationshipPlugin(Star):
         """
         try:
             tid = str(target_id).strip()
+            # 复读发送隔离：取消时给 AI 明确反馈，不伪报成功
+            if should_suppress_event_send(event):
+                return SUPPRESSED_TOOL_RESULT
             if not tid:
                 uids, gids = await self.contact._get_random_target(client=event.bot)
                 if uids:

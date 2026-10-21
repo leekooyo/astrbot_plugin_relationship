@@ -10,9 +10,11 @@ _✨ 人际关系管理器 ✨_
 
 > 本仓库由 [leekooyo](https://github.com/leekooyo) 维护，基于 [Zhalslar 的原项目](https://github.com/Zhalslar/astrbot_plugin_relationship)；安装和更新请使用本仓库地址。原始基线见 [UPSTREAM.md](UPSTREAM.md)。
 
-**当前版本：v3.1.2。** 版本号以 [metadata.yaml](metadata.yaml) 为准。
+**当前版本：v3.1.3。** 版本号以 [metadata.yaml](metadata.yaml) 为准。
 
 > **好友列表** 与 **群列表** 一次展示全部内容；长列表使用 AstrBot 默认图片模板输出一张长图。
+
+> 此维护版的发送隔离依赖本机 AstrBot 核心提供 `astrbot.core.utils.message_send_policy`。安装到未接入该模块的 AstrBot 核心会导致插件导入失败；更新核心前请先核对此依赖。
 
 ## 简介
 
